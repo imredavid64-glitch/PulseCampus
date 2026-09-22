@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Local Supabase stack (optional - for offline development)
+  # Requires: supabase CLI installed (brew install supabase/tap/supabase)
+  # Run: supabase start
+  
+  # Alternative: Use Supabase Cloud (recommended for hackathon)
+  # Just update .env files with cloud credentials
+
+  # Local PostgreSQL with PostGIS (if not using Supabase local)
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SUPABASE_URL=http://postgres:5432
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - FRONTEND_URL=http://localhost:3000
+      - ENVIRONMENT=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:5432
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_DEFAULT_LAT=37.7245
+      - NEXT_PUBLIC_DEFAULT_LNG=-122.4773
+      - NEXT_PUBLIC_DEFAULT_ZOOM=16
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+volumes:
+  postgres_data:
