@@ -1,20 +1,21 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { supabase, Pulse, UrgencyLevel, URGENCY_COLORS, URGENCY_LABELS, CATEGORY_ICONS } from '@/lib/supabase';
-import { formatDistanceToNow } from 'date-fns';
-import { MapPin, Clock, AlertCircle, X } from 'lucide-react';
+import { supabase, Pulse, UrgencyLevel } from '@/lib/supabase';
+import { schoolConfig, getUrgencyColor, getCategoryIcon } from '@/lib/school-config';
+import { MapPin, Clock, X } from 'lucide-react';
+import { PulseListSkeleton, PulseCardSkeleton } from './Skeleton';
 
 interface PulseListProps {
   pulses: Pulse[];
   userLocation: [number, number] | null;
   onPulseClick: (pulse: Pulse) => void;
   onDismiss: (pulseId: string) => void;
+  isLoading?: boolean;
 }
 
-export default function PulseList({ pulses, userLocation, onPulseClick, onDismiss }: PulseListProps) {
+export default function PulseList({ pulses, userLocation, onPulseClick, onDismiss, isLoading = false }: PulseListProps) {
   const [realtimePulses, setRealtimePulses] = useState<Pulse[]>(pulses);
-  const [subscription, setSubscription] = useState<any>(null);
 
   // Subscribe to realtime changes
   useEffect(() => {
@@ -33,8 +34,6 @@ export default function PulseList({ pulses, userLocation, onPulseClick, onDismis
         }
       )
       .subscribe();
-
-    setSubscription(channel);
 
     return () => {
       supabase.removeChannel(channel);
@@ -77,6 +76,10 @@ export default function PulseList({ pulses, userLocation, onPulseClick, onDismis
   // Filter expired pulses locally as backup
   const activePulses = realtimePulses.filter((p) => new Date(p.expires_at) > new Date());
 
+  if (isLoading) {
+    return <PulseListSkeleton />;
+  }
+
   if (activePulses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
@@ -91,7 +94,7 @@ export default function PulseList({ pulses, userLocation, onPulseClick, onDismis
     <div className="flex flex-col h-full overflow-hidden bg-white rounded-t-2xl shadow-xl border-t border-gray-100">
       <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-pulse-medium"></span>
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: schoolConfig.primaryColor }}></span>
           Live Pulse Feed
         </h2>
         <span className="text-sm text-gray-500">{activePulses.length} active</span>
@@ -118,8 +121,8 @@ function PulseCard({ pulse, userLocation, onClick, onDismiss }: {
   onClick: () => void;
   onDismiss: () => void;
 }) {
-  const color = URGENCY_COLORS[pulse.urgency];
-  const iconChar = CATEGORY_ICONS[pulse.category];
+  const color = getUrgencyColor(pulse.urgency);
+  const iconChar = getCategoryIcon(pulse.category);
   const distance = userLocation 
     ? calculateDistance(userLocation[0], userLocation[1], pulse.lat, pulse.lng)
     : null;
@@ -167,7 +170,7 @@ function PulseCard({ pulse, userLocation, onClick, onDismiss }: {
               className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
               style={{ backgroundColor: color }}
             >
-              {URGENCY_LABELS[pulse.urgency]}
+              {pulse.urgency}
             </span>
             <span className="flex items-center gap-1 text-xs text-gray-500">
               <Clock className="w-3 h-3" />

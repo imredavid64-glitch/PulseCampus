@@ -4,7 +4,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Pulse, URGENCY_COLORS, CATEGORY_ICONS, UrgencyLevel } from '@/lib/supabase';
+import { Pulse, UrgencyLevel } from '@/lib/supabase';
+import { schoolConfig, getUrgencyColor, getCategoryIcon } from '@/lib/school-config';
+import { MapSkeleton } from './Skeleton';
 
 // Fix Leaflet marker icon default
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -21,17 +23,18 @@ interface CampusMapProps {
   onPulseClick?: (pulse: Pulse) => void;
   onMapClick?: (lat: number, lng: number) => void;
   userLocation?: [number, number] | null;
+  isLoading?: boolean;
 }
 
 const DEFAULT_CENTER: [number, number] = [
-  parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LAT || '37.7245'),
-  parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LNG || '-122.4773'),
+  schoolConfig.defaultLat,
+  schoolConfig.defaultLng,
 ];
-const DEFAULT_ZOOM = parseInt(process.env.NEXT_PUBLIC_DEFAULT_ZOOM || '16', 10);
+const DEFAULT_ZOOM = schoolConfig.defaultZoom;
 
 function PulseMarker({ pulse, onClick }: { pulse: Pulse; onClick: () => void }) {
-  const color = URGENCY_COLORS[pulse.urgency];
-  const iconChar = CATEGORY_ICONS[pulse.category];
+  const color = getUrgencyColor(pulse.urgency);
+  const iconChar = getCategoryIcon(pulse.category);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -141,6 +144,7 @@ export default function CampusMap({
   onPulseClick,
   onMapClick,
   userLocation,
+  isLoading = false,
 }: CampusMapProps) {
   const [mapCenter, setMapCenter] = useState<[number, number]>(center);
   const [mapZoom, setMapZoom] = useState(zoom);
@@ -149,6 +153,10 @@ export default function CampusMap({
     setMapCenter(newCenter);
     setMapZoom(newZoom);
   }, []);
+
+  if (isLoading) {
+    return <MapSkeleton />;
+  }
 
   return (
     <MapContainer

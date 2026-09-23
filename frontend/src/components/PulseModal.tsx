@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Send, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { schoolConfig } from '@/lib/school-config';
 
 interface PulseModalProps {
   isOpen: boolean;
@@ -9,14 +10,6 @@ interface PulseModalProps {
   userLocation: [number, number] | null;
   onSuccess?: () => void;
 }
-
-const CATEGORIES = [
-  { value: 'Academic', label: '📚 Academic', desc: 'Homework, exams, study help' },
-  { value: 'BorrowGear', label: '🔧 Borrow Gear', desc: 'Calculators, chargers, tools' },
-  { value: 'FoodSharing', label: '🍕 Food Sharing', desc: 'Extra meals, snacks, leftovers' },
-  { value: 'SafetyEscort', label: '🛡️ Safety Escort', desc: 'Walk home, campus safety' },
-  { value: 'GeneralHelp', label: '🤝 General Help', desc: 'Anything else you need' },
-];
 
 export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }: PulseModalProps) {
   const [rawText, setRawText] = useState('');
@@ -126,14 +119,14 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             <div className="grid grid-cols-2 gap-2">
-              {CATEGORIES.map((cat) => (
+              {schoolConfig.categories.map((cat) => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => setSelectedCategory(cat.value)}
                   className={`p-3 rounded-xl text-left text-sm transition-all ${
                     selectedCategory === cat.value
-                      ? 'bg-blue-50 border-2 border-blue-500'
+                      ? `bg-[${schoolConfig.primaryColor}]20 border-2 border-[${schoolConfig.primaryColor}]`
                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -156,9 +149,9 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
               placeholder="e.g., Need a TI-84 calculator for my stats exam at 2pm outside Science Hall"
               rows={3}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none"
-              maxLength={500}
+              maxLength={schoolConfig.maxPulseLength}
             />
-            <p className="text-xs text-gray-500 text-right mt-1">{rawText.length}/500</p>
+            <p className="text-xs text-gray-500 text-right mt-1">{rawText.length}/{schoolConfig.maxPulseLength}</p>
           </div>
 
           {/* Location Name */}
@@ -199,7 +192,7 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
             type="submit"
             disabled={isSubmitting || !rawText.trim()}
             className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: '#2563eb' }}
+            style={{ backgroundColor: schoolConfig.primaryColor }}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">

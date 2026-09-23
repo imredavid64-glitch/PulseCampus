@@ -1,27 +1,27 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { MapPin, Loader2, RefreshCw, Bell, Settings, Menu, X } from 'lucide-react';
+import { MapPin, Loader2, RefreshCw, Bell, Menu, X } from 'lucide-react';
 import CampusMap from '@/components/CampusMap';
 import PulseList from '@/components/PulseList';
 import PulseModal from '@/components/PulseModal';
 import StudyPodMatcher from '@/components/StudyPodMatcher';
-import { supabase, Pulse, PulseCategory, UrgencyLevel } from '@/lib/supabase';
+import { supabase, Pulse } from '@/lib/supabase';
+import { schoolConfig, getUrgencyColor, getCategoryIcon } from '@/lib/school-config';
 
 const DEFAULT_CENTER: [number, number] = [
-  parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LAT || '37.7245'),
-  parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LNG || '-122.4773'),
+  schoolConfig.defaultLat,
+  schoolConfig.defaultLng,
 ];
 
 export default function Dashboard() {
   const [pulses, setPulses] = useState<Pulse[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
-  const [mapZoom, setMapZoom] = useState(16);
+  const [mapZoom, setMapZoom] = useState(schoolConfig.defaultZoom);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPulseModal, setShowPulseModal] = useState(false);
-  const [showPodMatcher, setShowPodMatcher] = useState(false);
   const [selectedPulse, setSelectedPulse] = useState<Pulse | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'pulses' | 'pods'>('pulses');
@@ -131,7 +131,6 @@ export default function Dashboard() {
 
   const handleMapClick = (lat: number, lng: number) => {
     setMapCenter([lat, lng]);
-    // Could open pulse modal with pre-filled location
   };
 
   const handlePulseClick = (pulse: Pulse) => {
@@ -148,13 +147,29 @@ export default function Dashboard() {
     fetchPulses();
   };
 
+  const sidebarStyle = {
+    transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+  } as React.CSSProperties;
+
+  const pulseTabClass = 'py-3 px-4 text-sm font-medium border-b-2 -mb-px transition-colors ' + (
+    activeTab === 'pulses'
+      ? 'border-[' + schoolConfig.primaryColor + '] text-[' + schoolConfig.primaryColor + ']'
+      : 'border-transparent text-gray-500 hover:text-gray-700'
+  );
+
+  const podTabClass = 'py-3 px-4 text-sm font-medium border-b-2 -mb-px transition-colors ' + (
+    activeTab === 'pods'
+      ? 'border-[' + schoolConfig.primaryColor + '] text-[' + schoolConfig.primaryColor + ']'
+      : 'border-transparent text-gray-500 hover:text-gray-700'
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile Sidebar Toggle */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className="fixed bottom-4 right-4 z-40 lg:hidden p-3 rounded-full shadow-lg"
-        style={{ backgroundColor: '#2563eb', color: 'white' }}
+        style={{ backgroundColor: schoolConfig.primaryColor, color: 'white' }}
         aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
       >
         {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -169,14 +184,15 @@ export default function Dashboard() {
           onPulseClick={handlePulseClick}
           onMapClick={handleMapClick}
           userLocation={userLocation}
+          isLoading={isLoading}
         />
 
         {/* Map Controls Overlay */}
         <div className="absolute top-4 left-4 right-4 z-20 flex items-start justify-between p-4 lg:p-6 pointer-events-none">
           <div className="pointer-events-auto flex items-center gap-3">
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-3 flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">PulseCampus</h1>
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">{schoolConfig.name}</h1>
+              <span className="px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: schoolConfig.primaryColor + '20', color: schoolConfig.primaryColor }}>
                 Live
               </span>
             </div>
@@ -203,7 +219,7 @@ export default function Dashboard() {
               className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-3 hover:shadow-xl transition-shadow"
               aria-label="Refresh pulses"
             >
-              <RefreshCw className={`w-5 h-5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={'w-5 h-5 text-gray-600 ' + (isLoading ? 'animate-spin' : '')} />
             </button>
           </div>
         </div>
@@ -212,7 +228,7 @@ export default function Dashboard() {
         {isLoading && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-30">
             <div className="text-center">
-              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" style={{ color: '#2563eb' }} />
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" style={{ color: schoolConfig.primaryColor }} />
               <p className="text-gray-600">Loading campus pulses...</p>
             </div>
           </div>
@@ -244,7 +260,7 @@ export default function Dashboard() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                      style={{ backgroundColor: `${getUrgencyColor(selectedPulse.urgency)}15` }}>
+                      style={{ backgroundColor: getUrgencyColor(selectedPulse.urgency) + '15' }}>
                       {getCategoryIcon(selectedPulse.category)}
                     </div>
                     <div>
@@ -285,9 +301,9 @@ export default function Dashboard() {
             <span className="text-lg">➕</span>
           </button>
           <button
-            onClick={() => setShowPodMatcher(true)}
+            onClick={() => { setActiveTab('pods'); setIsSidebarOpen(true); }}
             className="bg-white rounded-xl shadow-lg p-3 hover:shadow-xl transition-shadow"
-            aria-label="Study pod matcher"
+            aria-label="Study pods"
           >
             <span className="text-lg">📚</span>
           </button>
@@ -295,7 +311,7 @@ export default function Dashboard() {
       </div>
 
       {/* Sidebar - Right */}
-      <aside className={`lg:w-1/4 hidden lg:block fixed lg:static inset-y-0 right-0 z-30 transition-transform duration-300 bg-white border-l border-gray-100 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className="lg:w-1/4 hidden lg:block fixed lg:static inset-y-0 right-0 z-30 transition-transform duration-300 bg-white border-l border-gray-100" style={sidebarStyle}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
@@ -312,7 +328,7 @@ export default function Dashboard() {
                 <span className="text-lg">➕</span>
               </button>
               <button
-                onClick={() => setShowPodMatcher(true)}
+                onClick={() => { setActiveTab('pods'); setIsSidebarOpen(true); }}
                 className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
                 aria-label="Study pods"
               >
@@ -325,21 +341,13 @@ export default function Dashboard() {
           <div className="flex border-b border-gray-100 px-4">
             <button
               onClick={() => setActiveTab('pulses')}
-              className={`py-3 px-4 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === 'pulses'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              className={pulseTabClass}
             >
               Pulses ({pulses.filter(p => new Date(p.expires_at) > new Date()).length})
             </button>
             <button
               onClick={() => setActiveTab('pods')}
-              className={`py-3 px-4 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === 'pods'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              className={podTabClass}
             >
               Study Pods
             </button>
@@ -353,10 +361,11 @@ export default function Dashboard() {
                 userLocation={userLocation}
                 onPulseClick={handlePulseClick}
                 onDismiss={handleDismissPulse}
+                isLoading={isLoading}
               />
             )}
             {activeTab === 'pods' && (
-              <StudyPodMatcher userLocation={userLocation} />
+              <StudyPodMatcher userLocation={userLocation} isLoading={isLoading} />
             )}
           </div>
         </div>
@@ -372,30 +381,17 @@ export default function Dashboard() {
 
       <StudyPodMatcher
         userLocation={userLocation}
+        isLoading={isLoading}
       />
     </div>
   );
 }
 
-function getUrgencyColor(urgency: UrgencyLevel): string {
-  const colors: Record<UrgencyLevel, string> = {
-    Critical: '#dc2626',
-    High: '#ea580c',
-    Medium: '#2563eb',
-    Low: '#16a34a',
-  };
-  return colors[urgency];
-}
-
-function getCategoryIcon(category: PulseCategory): string {
-  const icons: Record<PulseCategory, string> = {
-    Academic: '📚',
-    BorrowGear: '🔧',
-    FoodSharing: '🍕',
-    SafetyEscort: '🛡️',
-    GeneralHelp: '🤝',
-  };
-  return icons[category];
+function sortPulses(a: Pulse, b: Pulse): number {
+  const urgencyOrder: Record<string, number> = { Critical: 1, High: 2, Medium: 3, Low: 4 };
+  const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+  if (urgencyDiff !== 0) return urgencyDiff;
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 }
 
 function formatTimeRemaining(expiresAt: string): string {
@@ -408,13 +404,6 @@ function formatTimeRemaining(expiresAt: string): string {
   const mins = Math.floor(diffMs / 60000);
   const hours = Math.floor(mins / 60);
   
-  if (hours > 0) return `${hours}h ${mins % 60}m left`;
-  return `${mins}m left`;
-}
-
-function sortPulses(a: Pulse, b: Pulse): number {
-  const urgencyOrder: Record<string, number> = { Critical: 1, High: 2, Medium: 3, Low: 4 };
-  const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-  if (urgencyDiff !== 0) return urgencyDiff;
-  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  if (hours > 0) return hours + 'h ' + (mins % 60) + 'm left';
+  return mins + 'm left';
 }

@@ -1,24 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Users, BookOpen, CheckCircle, XCircle, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Search, Users, BookOpen, CheckCircle, XCircle, Loader2, Plus } from 'lucide-react';
+import { schoolConfig } from '@/lib/school-config';
+import { StudyPodMatcherSkeleton, MatchCardSkeleton } from './Skeleton';
 
 interface StudyPodMatcherProps {
   userLocation: [number, number] | null;
+  isLoading?: boolean;
 }
 
-const COMMON_COURSES = [
-  'CS 101', 'CS 201', 'CS 301', 'MATH 101', 'MATH 201', 'PHYS 101', 
-  'CHEM 101', 'BIO 101', 'ECON 101', 'PSYC 101', 'STAT 101', 'ENG 101'
-];
-
-const COMMON_SKILLS = [
-  'Python', 'JavaScript', 'Java', 'C++', 'React', 'Node.js', 'SQL',
-  'Calculus', 'Linear Algebra', 'Statistics', 'Physics', 'Chemistry',
-  'Biology', 'Writing', 'Research', 'Data Analysis', 'Machine Learning'
-];
-
-export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) {
+export default function StudyPodMatcher({ userLocation, isLoading = false }: StudyPodMatcherProps) {
   const [courseCode, setCourseCode] = useState('');
   const [topic, setTopic] = useState('');
   const [strongSkills, setStrongSkills] = useState<string[]>([]);
@@ -109,7 +101,7 @@ export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) 
           strong_skills: strongSkills,
           needed_skills: neededSkills,
           building_location: buildingLocation,
-          max_capacity: 4,
+          max_capacity: schoolConfig.defaultPodCapacity,
         }),
       });
 
@@ -152,17 +144,22 @@ export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) 
     }
   };
 
+  if (isLoading) {
+    return <StudyPodMatcherSkeleton />;
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-blue-600" />
+          <BookOpen className="w-5 h-5" style={{ color: schoolConfig.primaryColor }} />
           <h2 className="text-lg font-semibold text-gray-900">Study Pod Matcher</h2>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          className="text-sm font-medium flex items-center gap-1"
+          style={{ color: schoolConfig.primaryColor }}
         >
           <Plus className="w-4 h-4" />
           {showCreate ? 'Cancel' : 'Create Pod'}
@@ -277,7 +274,7 @@ function SearchPodForm({
             maxLength={20}
           />
           <datalist id="course-suggestions">
-            {COMMON_COURSES.map(c => <option key={c} value={c} />)}
+            {schoolConfig.courses.map(c => <option key={c} value={c} />)}
           </datalist>
         </div>
       </div>
@@ -289,7 +286,7 @@ function SearchPodForm({
           skills={strongSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={COMMON_SKILLS}
+          suggestions={schoolConfig.skills}
           type="strong"
         />
         <SkillInput
@@ -297,7 +294,7 @@ function SearchPodForm({
           skills={neededSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={COMMON_SKILLS}
+          suggestions={schoolConfig.skills}
           type="needed"
         />
       </div>
@@ -307,7 +304,7 @@ function SearchPodForm({
         onClick={onSearch}
         disabled={isSearching || !courseCode.trim()}
         className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{ backgroundColor: '#2563eb' }}
+        style={{ backgroundColor: schoolConfig.primaryColor }}
       >
         {isSearching ? (
           <>
@@ -380,7 +377,7 @@ function CreatePodForm({
           skills={strongSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={COMMON_SKILLS}
+          suggestions={schoolConfig.skills}
           type="strong"
         />
         <SkillInput
@@ -388,7 +385,7 @@ function CreatePodForm({
           skills={neededSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={COMMON_SKILLS}
+          suggestions={schoolConfig.skills}
           type="needed"
         />
       </div>
@@ -409,7 +406,7 @@ function CreatePodForm({
         onClick={onSubmit}
         disabled={isSubmitting}
         className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{ backgroundColor: '#16a34a' }}
+        style={{ backgroundColor: schoolConfig.secondaryColor }}
       >
         {isSubmitting ? (
           <>
@@ -565,7 +562,7 @@ function MatchCard({ match, onJoin }: any) {
           disabled={pod.current_count >= pod.max_capacity}
           className="px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           style={{ 
-            backgroundColor: pod.current_count >= pod.max_capacity ? '#9ca3af' : '#16a34a',
+            backgroundColor: pod.current_count >= pod.max_capacity ? '#9ca3af' : schoolConfig.secondaryColor,
             color: 'white'
           }}
         >
