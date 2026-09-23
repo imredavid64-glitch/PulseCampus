@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createBrowserClient } from '@supabase/supabase-js';
 import { X, MapPin, Send, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface PulseModalProps {
@@ -27,10 +26,6 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // Focus textarea on open
   useEffect(() => {

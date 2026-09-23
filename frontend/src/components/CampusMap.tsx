@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Pulse, URGENCY_COLORS, CATEGORY_ICONS, UrgencyLevel } from '@/lib/supabase';
@@ -33,10 +33,14 @@ function PulseMarker({ pulse, onClick }: { pulse: Pulse; onClick: () => void }) 
   const color = URGENCY_COLORS[pulse.urgency];
   const iconChar = CATEGORY_ICONS[pulse.category];
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    onClick();
+  };
+
   return (
     <Marker
       position={[pulse.lat, pulse.lng]}
-      onClick={onClick}
       icon={
         L.divIcon({
           className: 'pulse-marker',
@@ -55,7 +59,7 @@ function PulseMarker({ pulse, onClick }: { pulse: Pulse; onClick: () => void }) 
         autoClose={false}
         closeOnClick={false}
       >
-        <div className="p-2 min-w-[200px]">
+        <div className="p-2 min-w-[200px]" onClick={handleClick}>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-lg">{iconChar}</span>
             <span className="font-semibold text-sm">{pulse.summary}</span>
@@ -107,12 +111,26 @@ function UserLocationMarker({ position }: { position: [number, number] }) {
 
 function MapEvents({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) {
   useMapEvents({
-    click(e) {
+    click(e: L.LeafletMouseEvent) {
       if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
     },
   });
+  return null;
+}
+
+function MapCenterTracker({ onMove }: { onMove: (center: [number, number], zoom: number) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    const handler = () => {
+      onMove([map.getCenter().lat, map.getCenter().lng], map.getZoom());
+    };
+    map.on('moveend', handler);
+    return () => {
+      map.off('moveend', handler);
+    };
+  }, [map, onMove]);
   return null;
 }
 
@@ -127,6 +145,11 @@ export default function CampusMap({
   const [mapCenter, setMapCenter] = useState<[number, number]>(center);
   const [mapZoom, setMapZoom] = useState(zoom);
 
+  const handleMove = useCallback((newCenter: [number, number], newZoom: number) => {
+    setMapCenter(newCenter);
+    setMapZoom(newZoom);
+  }, []);
+
   return (
     <MapContainer
       center={mapCenter}
@@ -134,12 +157,7 @@ export default function CampusMap({
       zoomControl={true}
       scrollWheelZoom={true}
       style={{ height: '100%', width: '100%', zIndex: 0 }}
-      whenCreated={(map) => {
-        map.on('moveend', () => {
-          setMapCenter([map.getCenter().lat, map.getCenter().lng]);
-          setMapZoom(map.getZoom());
-        });
-      }}
+      whenReady={() => {}}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -147,6 +165,7 @@ export default function CampusMap({
         maxZoom={19}
       />
       <MapEvents onMapClick={onMapClick} />
+      <MapCenterTracker onMove={handleMove} />
       
       {userLocation && <UserLocationMarker position={userLocation} />}
       

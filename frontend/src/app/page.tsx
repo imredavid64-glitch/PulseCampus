@@ -1,23 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createBrowserClient } from '@supabase/supabase-js';
 import { MapPin, Loader2, RefreshCw, Bell, Settings, Menu, X } from 'lucide-react';
 import CampusMap from '@/components/CampusMap';
 import PulseList from '@/components/PulseList';
 import PulseModal from '@/components/PulseModal';
 import StudyPodMatcher from '@/components/StudyPodMatcher';
-import { Pulse, PulseCategory, UrgencyLevel } from '@/lib/supabase';
+import { supabase, Pulse, PulseCategory, UrgencyLevel } from '@/lib/supabase';
 
 const DEFAULT_CENTER: [number, number] = [
   parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LAT || '37.7245'),
   parseFloat(process.env.NEXT_PUBLIC_DEFAULT_LNG || '-122.4773'),
 ];
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function Dashboard() {
   const [pulses, setPulses] = useState<Pulse[]>([]);
@@ -89,7 +83,7 @@ export default function Dashboard() {
     const channel = supabase
       .channel('pulses-realtime')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
@@ -102,7 +96,9 @@ export default function Dashboard() {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleRealtimeChange = (payload: any) => {

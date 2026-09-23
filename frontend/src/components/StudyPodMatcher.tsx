@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/supabase-js';
 import { Search, Users, BookOpen, CheckCircle, XCircle, Loader2, Plus, Trash2 } from 'lucide-react';
 
 interface StudyPodMatcherProps {
@@ -30,10 +29,6 @@ export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) 
   const [isCreating, setIsCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleAddSkill = (skill: string, type: 'strong' | 'needed') => {
     const skills = type === 'strong' ? strongSkills : neededSkills;
@@ -201,6 +196,8 @@ export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) 
             setBuildingLocation={setBuildingLocation}
             onSubmit={handleCreatePod}
             isSubmitting={isCreating}
+            onAddSkill={handleAddSkill}
+            onRemoveSkill={handleRemoveSkill}
           />
         ) : (
           <SearchPodForm
@@ -213,6 +210,8 @@ export default function StudyPodMatcher({ userLocation }: StudyPodMatcherProps) 
             onSearch={handleSearch}
             isSearching={isSearching}
             userLocation={userLocation}
+            onAddSkill={handleAddSkill}
+            onRemoveSkill={handleRemoveSkill}
           />
         )}
 
@@ -258,6 +257,8 @@ function SearchPodForm({
   onSearch,
   isSearching,
   userLocation,
+  onAddSkill,
+  onRemoveSkill,
 }: any) {
   return (
     <div className="space-y-4">
@@ -286,16 +287,16 @@ function SearchPodForm({
         <SkillInput
           label="You're Good At"
           skills={strongSkills}
-          onAdd={handleAddSkill}
-          onRemove={handleRemoveSkill}
+          onAdd={onAddSkill}
+          onRemove={onRemoveSkill}
           suggestions={COMMON_SKILLS}
           type="strong"
         />
         <SkillInput
           label="You Need Help With"
           skills={neededSkills}
-          onAdd={handleAddSkill}
-          onRemove={handleRemoveSkill}
+          onAdd={onAddSkill}
+          onRemove={onRemoveSkill}
           suggestions={COMMON_SKILLS}
           type="needed"
         />
@@ -343,6 +344,8 @@ function CreatePodForm({
   setBuildingLocation,
   onSubmit,
   isSubmitting,
+  onAddSkill,
+  onRemoveSkill,
 }: any) {
   return (
     <div className="space-y-4">
@@ -375,16 +378,16 @@ function CreatePodForm({
         <SkillInput
           label="You're Good At"
           skills={strongSkills}
-          onAdd={handleAddSkill}
-          onRemove={handleRemoveSkill}
+          onAdd={onAddSkill}
+          onRemove={onRemoveSkill}
           suggestions={COMMON_SKILLS}
           type="strong"
         />
         <SkillInput
           label="You Need Help With"
           skills={neededSkills}
-          onAdd={handleAddSkill}
-          onRemove={handleRemoveSkill}
+          onAdd={onAddSkill}
+          onRemove={onRemoveSkill}
           suggestions={COMMON_SKILLS}
           type="needed"
         />

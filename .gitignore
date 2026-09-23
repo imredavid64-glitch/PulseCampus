@@ -1,8 +1,10 @@
 # Dependencies
 node_modules/
 backend/venv/
-backend/__pycache__/
-backend/*.pyc
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # Environment files
 .env
@@ -30,6 +32,7 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Testing
 coverage/
@@ -46,6 +49,11 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Package lock files (use npm ci instead)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
 # OS
 Thumbs.db

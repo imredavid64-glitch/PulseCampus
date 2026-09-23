@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { supabase, Pulse, URGENCY_COLORS, URGENCY_LABELS, CATEGORY_ICONS } from '@/lib/supabase';
+import { supabase, Pulse, UrgencyLevel, URGENCY_COLORS, URGENCY_LABELS, CATEGORY_ICONS } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { MapPin, Clock, AlertCircle, X } from 'lucide-react';
 
@@ -21,14 +21,14 @@ export default function PulseList({ pulses, userLocation, onPulseClick, onDismis
     const channel = supabase
       .channel('pulses-changes')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
           table: 'pulses',
           filter: 'expires_at=gt.now()',
         },
-        (payload) => {
+        (payload: { eventType: string; new: Pulse | null; old: Pulse | null }) => {
           handleRealtimeChange(payload);
         }
       )
@@ -127,8 +127,7 @@ function PulseCard({ pulse, userLocation, onClick, onDismiss }: {
   return (
     <button
       onClick={onClick}
-      className="group relative p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-offset-2"
-      style={{ focusRingColor: color }}
+      className={`group relative p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${getUrgencyClass(pulse.urgency)}`}
     >
       <div className="flex items-start gap-3">
         <div
@@ -227,4 +226,14 @@ function sortPulses(a: Pulse, b: Pulse): number {
   const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
   if (urgencyDiff !== 0) return urgencyDiff;
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+}
+
+function getUrgencyClass(urgency: UrgencyLevel): string {
+  const classes: Record<UrgencyLevel, string> = {
+    Critical: 'red-500',
+    High: 'orange-500',
+    Medium: 'blue-500',
+    Low: 'green-500',
+  };
+  return classes[urgency];
 }
