@@ -101,6 +101,7 @@ export const DEFAULT_SCHOOL_CONFIG: SchoolConfig = {
     { value: "FoodSharing", label: "🍕 Food Sharing", desc: "Extra meals, snacks, leftovers" },
     { value: "SafetyEscort", label: "🛡️ Safety Escort", desc: "Walk home, campus safety" },
     { value: "GeneralHelp", label: "🤝 General Help", desc: "Anything else you need" },
+    { value: "BananaPulse", label: "🍌 Banana Pulse", desc: "Random acts of kindness - free coffee, high-fives, sticky notes" },
   ],
   
   urgencyLevels: [
@@ -149,7 +150,17 @@ export function getSchoolConfig(): SchoolConfig {
   return DEFAULT_SCHOOL_CONFIG;
 }
 
-export const schoolConfig = getSchoolConfig();
+// Lazy getter to avoid window reference during SSR/build
+let _schoolConfig: SchoolConfig | null = null;
+export function useSchoolConfig(): SchoolConfig {
+  if (!_schoolConfig) {
+    _schoolConfig = getSchoolConfig();
+  }
+  return _schoolConfig;
+}
+
+// For backwards compatibility - only use in client components
+export const schoolConfig = typeof window !== 'undefined' ? getSchoolConfig() : DEFAULT_SCHOOL_CONFIG;
 
 // Helper to get urgency color
 export function getUrgencyColor(urgency: string): string {

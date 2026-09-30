@@ -14,6 +14,14 @@ class Settings(BaseSettings):
     PORT: int = 8000
     ENVIRONMENT: str = "development"
     FRONTEND_URL: str = "http://localhost:3000"
+    
+    # Web Push Notifications (VAPID)
+    VAPID_PRIVATE_KEY: str = Field(default="", description="VAPID private key for web push")
+    VAPID_PUBLIC_KEY: str = Field(default="", description="VAPID public key for web push")
+    VAPID_SUBJECT: str = Field(default="mailto:admin@pulse.campus", description="VAPID subject (mailto or https)")
+    
+    # Sentry Error Tracking
+    SENTRY_DSN: str = Field(default="", description="Sentry DSN for error tracking")
 
     class Config:
         env_file = ".env"

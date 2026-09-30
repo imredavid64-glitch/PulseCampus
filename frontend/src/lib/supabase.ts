@@ -6,7 +6,7 @@ export const supabase = createClient(
 );
 
 // Types matching backend schemas
-export type PulseCategory = 'Academic' | 'BorrowGear' | 'FoodSharing' | 'SafetyEscort' | 'GeneralHelp';
+export type PulseCategory = 'Academic' | 'BorrowGear' | 'FoodSharing' | 'SafetyEscort' | 'GeneralHelp' | 'BananaPulse';
 export type UrgencyLevel = 'Low' | 'Medium' | 'High' | 'Critical';
 
 export interface Pulse {
@@ -67,4 +67,5 @@ export const CATEGORY_ICONS: Record<PulseCategory, string> = {
   FoodSharing: '🍕',
   SafetyEscort: '🛡️',
   GeneralHelp: '🤝',
+  BananaPulse: '🍌',
 };

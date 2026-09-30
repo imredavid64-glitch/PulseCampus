@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Send, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { schoolConfig } from '@/lib/school-config';
+import { useSchoolConfig } from '@/lib/school-config';
+import VoicePulseButton from './VoicePulseButton';
 
 interface PulseModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PulseModalProps {
 }
 
 export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }: PulseModalProps) {
+  const config = useSchoolConfig();
   const [rawText, setRawText] = useState('');
   const [locationName, setLocationName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('GeneralHelp');
@@ -119,14 +121,14 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             <div className="grid grid-cols-2 gap-2">
-              {schoolConfig.categories.map((cat) => (
+              {config.categories.map((cat) => (
                 <button
                   key={cat.value}
                   type="button"
                   onClick={() => setSelectedCategory(cat.value)}
                   className={`p-3 rounded-xl text-left text-sm transition-all ${
                     selectedCategory === cat.value
-                      ? `bg-[${schoolConfig.primaryColor}]20 border-2 border-[${schoolConfig.primaryColor}]`
+                      ? `bg-[${config.primaryColor}]20 border-2 border-[${config.primaryColor}]`
                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -142,16 +144,22 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
             <label className="block text-sm font-medium text-gray-700 mb-2">
               What do you need? <span className="text-red-500">*</span>
             </label>
-            <textarea
-              ref={textareaRef}
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder="e.g., Need a TI-84 calculator for my stats exam at 2pm outside Science Hall"
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none"
-              maxLength={schoolConfig.maxPulseLength}
-            />
-            <p className="text-xs text-gray-500 text-right mt-1">{rawText.length}/{schoolConfig.maxPulseLength}</p>
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder="e.g., Need a TI-84 calculator for my stats exam at 2pm outside Science Hall"
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none pr-14"
+                maxLength={config.maxPulseLength}
+              />
+              <VoicePulseButton
+                onTranscript={(text) => setRawText(prev => prev + (prev ? ' ' : '') + text)}
+                className="absolute right-3 bottom-3"
+              />
+              <p className="text-xs text-gray-500 text-right mt-1">{rawText.length}/{config.maxPulseLength}</p>
+            </div>
           </div>
 
           {/* Location Name */}
@@ -192,7 +200,7 @@ export default function PulseModal({ isOpen, onClose, userLocation, onSuccess }:
             type="submit"
             disabled={isSubmitting || !rawText.trim()}
             className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: schoolConfig.primaryColor }}
+            style={{ backgroundColor: config.primaryColor }}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">

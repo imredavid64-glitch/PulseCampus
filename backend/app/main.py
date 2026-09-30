@@ -2,13 +2,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from app.config import settings
 from app.database import db
-from app.routes import pulses, pods
+from app.routes import pulses, pods, push, kindness, gamification
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize Sentry
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[
+            FastApiIntegration(transaction_style="endpoint"),
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+        ],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        environment=settings.ENVIRONMENT,
+        send_default_pii=True,
+    )
+    logger.info("Sentry initialized")
 
 
 @asynccontextmanager
@@ -41,6 +59,9 @@ app.add_middleware(
 # Include routers
 app.include_router(pulses.router)
 app.include_router(pods.router)
+app.include_router(push.router)
+app.include_router(kindness.router)
+app.include_router(gamification.router)
 
 
 @app.get("/health")

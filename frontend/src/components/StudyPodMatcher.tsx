@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Users, BookOpen, CheckCircle, XCircle, Loader2, Plus } from 'lucide-react';
-import { schoolConfig } from '@/lib/school-config';
+import { useSchoolConfig } from '@/lib/school-config';
 import { StudyPodMatcherSkeleton, MatchCardSkeleton } from './Skeleton';
 
 interface StudyPodMatcherProps {
@@ -11,6 +11,7 @@ interface StudyPodMatcherProps {
 }
 
 export default function StudyPodMatcher({ userLocation, isLoading = false }: StudyPodMatcherProps) {
+  const config = useSchoolConfig();
   const [courseCode, setCourseCode] = useState('');
   const [topic, setTopic] = useState('');
   const [strongSkills, setStrongSkills] = useState<string[]>([]);
@@ -101,7 +102,7 @@ export default function StudyPodMatcher({ userLocation, isLoading = false }: Stu
           strong_skills: strongSkills,
           needed_skills: neededSkills,
           building_location: buildingLocation,
-          max_capacity: schoolConfig.defaultPodCapacity,
+          max_capacity: config.defaultPodCapacity,
         }),
       });
 
@@ -153,13 +154,13 @@ export default function StudyPodMatcher({ userLocation, isLoading = false }: Stu
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5" style={{ color: schoolConfig.primaryColor }} />
+          <BookOpen className="w-5 h-5" style={{ color: config.primaryColor }} />
           <h2 className="text-lg font-semibold text-gray-900">Study Pod Matcher</h2>
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
           className="text-sm font-medium flex items-center gap-1"
-          style={{ color: schoolConfig.primaryColor }}
+          style={{ color: config.primaryColor }}
         >
           <Plus className="w-4 h-4" />
           {showCreate ? 'Cancel' : 'Create Pod'}
@@ -195,6 +196,7 @@ export default function StudyPodMatcher({ userLocation, isLoading = false }: Stu
             isSubmitting={isCreating}
             onAddSkill={handleAddSkill}
             onRemoveSkill={handleRemoveSkill}
+            config={config}
           />
         ) : (
           <SearchPodForm
@@ -209,6 +211,7 @@ export default function StudyPodMatcher({ userLocation, isLoading = false }: Stu
             userLocation={userLocation}
             onAddSkill={handleAddSkill}
             onRemoveSkill={handleRemoveSkill}
+            config={config}
           />
         )}
 
@@ -235,6 +238,7 @@ export default function StudyPodMatcher({ userLocation, isLoading = false }: Stu
                 key={match.pod.id}
                 match={match}
                 onJoin={handleJoinPod}
+                config={config}
               />
             ))}
           </div>
@@ -256,6 +260,7 @@ function SearchPodForm({
   userLocation,
   onAddSkill,
   onRemoveSkill,
+  config,
 }: any) {
   return (
     <div className="space-y-4">
@@ -274,7 +279,7 @@ function SearchPodForm({
             maxLength={20}
           />
           <datalist id="course-suggestions">
-            {schoolConfig.courses.map(c => <option key={c} value={c} />)}
+            {config.courses.map((c: string) => <option key={c} value={c} />)}
           </datalist>
         </div>
       </div>
@@ -286,7 +291,7 @@ function SearchPodForm({
           skills={strongSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={schoolConfig.skills}
+          suggestions={config.skills}
           type="strong"
         />
         <SkillInput
@@ -294,7 +299,7 @@ function SearchPodForm({
           skills={neededSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={schoolConfig.skills}
+          suggestions={config.skills}
           type="needed"
         />
       </div>
@@ -304,7 +309,7 @@ function SearchPodForm({
         onClick={onSearch}
         disabled={isSearching || !courseCode.trim()}
         className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{ backgroundColor: schoolConfig.primaryColor }}
+        style={{ backgroundColor: config.primaryColor }}
       >
         {isSearching ? (
           <>
@@ -343,6 +348,7 @@ function CreatePodForm({
   isSubmitting,
   onAddSkill,
   onRemoveSkill,
+  config,
 }: any) {
   return (
     <div className="space-y-4">
@@ -377,7 +383,7 @@ function CreatePodForm({
           skills={strongSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={schoolConfig.skills}
+          suggestions={config.skills}
           type="strong"
         />
         <SkillInput
@@ -385,7 +391,7 @@ function CreatePodForm({
           skills={neededSkills}
           onAdd={onAddSkill}
           onRemove={onRemoveSkill}
-          suggestions={schoolConfig.skills}
+          suggestions={config.skills}
           type="needed"
         />
       </div>
@@ -406,7 +412,7 @@ function CreatePodForm({
         onClick={onSubmit}
         disabled={isSubmitting}
         className="w-full py-3 px-4 rounded-xl font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        style={{ backgroundColor: schoolConfig.secondaryColor }}
+        style={{ backgroundColor: config.secondaryColor }}
       >
         {isSubmitting ? (
           <>
@@ -508,7 +514,7 @@ function SkillInput({
   );
 }
 
-function MatchCard({ match, onJoin }: any) {
+function MatchCard({ match, onJoin, config }: any) {
   const { pod, match_score, matching_skills, missing_skills } = match;
   const scorePercent = Math.round(match_score * 100);
 
@@ -562,7 +568,7 @@ function MatchCard({ match, onJoin }: any) {
           disabled={pod.current_count >= pod.max_capacity}
           className="px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           style={{ 
-            backgroundColor: pod.current_count >= pod.max_capacity ? '#9ca3af' : schoolConfig.secondaryColor,
+            backgroundColor: pod.current_count >= pod.max_capacity ? '#9ca3af' : config.secondaryColor,
             color: 'white'
           }}
         >

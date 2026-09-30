@@ -10,6 +10,7 @@ class PulseCategory(str, Enum):
     FOOD_SHARING = "FoodSharing"
     SAFETY_ESCORT = "SafetyEscort"
     GENERAL_HELP = "GeneralHelp"
+    BANANA_PULSE = "BananaPulse"
 
 
 class UrgencyLevel(str, Enum):
@@ -106,3 +107,20 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
     version: str = "1.0.0"
+
+
+class KindnessChainCreate(BaseModel):
+    helper_pulse_id: str
+    helped_pulse_id: str
+    chain_type: str = "direct"  # direct, indirect, ripple
+
+
+class KindnessChainResponse(BaseModel):
+    id: str
+    helper_pulse_id: str
+    helped_pulse_id: str
+    chain_type: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

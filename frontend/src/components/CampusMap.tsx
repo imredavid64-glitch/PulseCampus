@@ -5,8 +5,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 're
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Pulse, UrgencyLevel } from '@/lib/supabase';
-import { schoolConfig, getUrgencyColor, getCategoryIcon } from '@/lib/school-config';
+import { getUrgencyColor, getCategoryIcon, useSchoolConfig } from '@/lib/school-config';
 import { MapSkeleton } from './Skeleton';
+import KindnessChainLayer from './KindnessChain';
 
 // Fix Leaflet marker icon default
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -18,19 +19,13 @@ L.Icon.Default.mergeOptions({
 
 interface CampusMapProps {
   pulses: Pulse[];
-  center: [number, number];
-  zoom: number;
+  center?: [number, number];
+  zoom?: number;
   onPulseClick?: (pulse: Pulse) => void;
   onMapClick?: (lat: number, lng: number) => void;
   userLocation?: [number, number] | null;
   isLoading?: boolean;
 }
-
-const DEFAULT_CENTER: [number, number] = [
-  schoolConfig.defaultLat,
-  schoolConfig.defaultLng,
-];
-const DEFAULT_ZOOM = schoolConfig.defaultZoom;
 
 function PulseMarker({ pulse, onClick }: { pulse: Pulse; onClick: () => void }) {
   const color = getUrgencyColor(pulse.urgency);
@@ -137,21 +132,78 @@ function MapCenterTracker({ onMove }: { onMove: (center: [number, number], zoom:
   return null;
 }
 
-export default function CampusMap({
+interface KindnessChain {
+  id: string;
+  helper_pulse_id: string;
+  helped_pulse_id: string;
+  chain_type: string;
+  created_at: string;
+}
+
+function CampusMapInner({
   pulses,
-  center = DEFAULT_CENTER,
-  zoom = DEFAULT_ZOOM,
+  center,
+  zoom,
   onPulseClick,
   onMapClick,
   userLocation,
   isLoading = false,
 }: CampusMapProps) {
-  const [mapCenter, setMapCenter] = useState<[number, number]>(center);
-  const [mapZoom, setMapZoom] = useState(zoom);
+  const config = useSchoolConfig();
+  const defaultCenter: [number, number] = [config.defaultLat, config.defaultLng];
+  const defaultZoom = config.defaultZoom;
+  
+  const [mapCenter, setMapCenter] = useState<[number, number]>(center ?? defaultCenter);
+  const [mapZoom, setMapZoom] = useState(zoom ?? defaultZoom);
+  const [kindnessChains, setKindnessChains] = useState<KindnessChain[]>([]);
 
   const handleMove = useCallback((newCenter: [number, number], newZoom: number) => {
     setMapCenter(newCenter);
     setMapZoom(newZoom);
+  }, []);
+
+  // Fetch kindness chains
+  useEffect(() => {
+    const fetchChains = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/kindness-chains`);
+        if (response.ok) {
+          const data = await response.json();
+          setKindnessChains(data);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch kindness chains:', err);
+      }
+    };
+    fetchChains();
+  }, []);
+
+  // Realtime subscription for kindness chains
+  useEffect(() => {
+    const { supabase } = require('@/lib/supabase');
+    const channel = supabase
+      .channel('kindness-chains-realtime')
+      .on(
+        'postgres_changes' as any,
+        {
+          event: '*',
+          schema: 'public',
+          table: 'kindness_chains',
+        },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            setKindnessChains(prev => [...prev, payload.new]);
+          } else if (payload.eventType === 'DELETE') {
+            setKindnessChains(prev => prev.filter(c => c.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (isLoading) {
@@ -177,6 +229,8 @@ export default function CampusMap({
       
       {userLocation && <UserLocationMarker position={userLocation} />}
       
+      <KindnessChainLayer chains={kindnessChains} pulses={pulses} />
+      
       {pulses.map((pulse) => (
         <PulseMarker
           key={pulse.id}
@@ -186,6 +240,10 @@ export default function CampusMap({
       ))}
     </MapContainer>
   );
+}
+
+export default function CampusMap(props: CampusMapProps) {
+  return <CampusMapInner {...props} />;
 }
 
 function formatTimeRemaining(expiresAt: string): string {

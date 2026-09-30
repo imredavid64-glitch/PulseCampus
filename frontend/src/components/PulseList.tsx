@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase, Pulse, UrgencyLevel } from '@/lib/supabase';
-import { schoolConfig, getUrgencyColor, getCategoryIcon } from '@/lib/school-config';
+import { getUrgencyColor, getCategoryIcon, useSchoolConfig } from '@/lib/school-config';
 import { MapPin, Clock, X } from 'lucide-react';
 import { PulseListSkeleton, PulseCardSkeleton } from './Skeleton';
 
@@ -15,6 +15,7 @@ interface PulseListProps {
 }
 
 export default function PulseList({ pulses, userLocation, onPulseClick, onDismiss, isLoading = false }: PulseListProps) {
+  const config = useSchoolConfig();
   const [realtimePulses, setRealtimePulses] = useState<Pulse[]>(pulses);
 
   // Subscribe to realtime changes
@@ -94,7 +95,7 @@ export default function PulseList({ pulses, userLocation, onPulseClick, onDismis
     <div className="flex flex-col h-full overflow-hidden bg-white rounded-t-2xl shadow-xl border-t border-gray-100">
       <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: schoolConfig.primaryColor }}></span>
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.primaryColor }}></span>
           Live Pulse Feed
         </h2>
         <span className="text-sm text-gray-500">{activePulses.length} active</span>

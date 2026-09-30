@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 import asyncpg
+import json
 from app.database import get_db, get_supabase
 from app.schemas import (
     PulseCreate, PulseResponse, NearbyPulsesRequest, 
     AIParseResponse, PulseCategory, UrgencyLevel
 )
 from app.ai_engine import parse_pulse
+from app.push_service import push_service
 from datetime import datetime
 
 router = APIRouter(prefix="/pulses", tags=["pulses"])
@@ -49,6 +51,15 @@ async def create_pulse(pulse: PulseCreate, db=Depends(get_db)):
         parsed.safety_reason
     )
     
+    # Send push notifications to subscribers (async, don't wait)
+    import asyncio
+    asyncio.create_task(send_pulse_notifications(
+        str(row["id"]),
+        parsed.summary,
+        parsed.category.value,
+        parsed.urgency.value
+    ))
+    
     return PulseResponse(
         id=str(row["id"]),
         raw_text=pulse.raw_text,
@@ -65,6 +76,26 @@ async def create_pulse(pulse: PulseCreate, db=Depends(get_db)):
         created_at=row["created_at"],
         expires_at=row["expires_at"]
     )
+
+
+async def send_pulse_notifications(pulse_id: str, summary: str, category: str, urgency: str):
+    """Send push notifications for a new pulse to all subscribers."""
+    from app.database import db
+    try:
+        rows = await db.fetch("SELECT endpoint, keys FROM push_subscriptions")
+        for row in rows:
+            subscription = {"endpoint": row["endpoint"], "keys": row["keys"]}
+            push_service.send_pulse_notification(
+                subscription=subscription,
+                pulse_summary=summary,
+                pulse_category=category,
+                pulse_urgency=urgency,
+                pulse_id=pulse_id,
+            )
+    except Exception as e:
+        # Log but don't fail the request
+        import logging
+        logging.getLogger(__name__).error(f"Failed to send push notifications: {e}")
 
 
 @router.get("/nearby", response_model=List[PulseResponse])

@@ -17,6 +17,12 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
+.dark .leaflet-popup-content-wrapper {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
 .leaflet-popup-content {
   margin: 8px 12px;
   line-height: 1.5;
@@ -24,6 +30,11 @@
 
 .leaflet-popup-tip {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dark .leaflet-popup-tip {
+  background: #1f2937;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 /* Custom marker styles */
@@ -63,6 +74,15 @@
   background: #555;
 }
 
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #666;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
 /* Animation */
 @keyframes pulse-ring {
   0% {
@@ -83,4 +103,29 @@
 *:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
+}
+
+/* Dark mode leaflet tile layer fix */
+.dark .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.dark .leaflet-tile-loaded {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Dark mode map container */
+.dark .leaflet-container {
+  background: #111827;
+}
+
+/* Selection styles */
+::selection {
+  background-color: #2563eb;
+  color: white;
+}
+
+.dark ::selection {
+  background-color: #3b82f6;
+  color: white;
 }

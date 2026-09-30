@@ -40,19 +40,19 @@ const TOAST_ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 const TOAST_STYLES: Record<ToastType, string> = {
-  success: 'bg-green-50 border-green-200',
-  error: 'bg-red-50 border-red-200',
-  warning: 'bg-yellow-50 border-yellow-200',
-  info: 'bg-blue-50 border-blue-200',
-  loading: 'bg-blue-50 border-blue-200',
+  success: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800',
+  error: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800',
+  warning: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800',
+  info: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
+  loading: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
 };
 
 const TOAST_TITLE_COLORS: Record<ToastType, string> = {
-  success: 'text-green-800',
-  error: 'text-red-800',
-  warning: 'text-yellow-800',
-  info: 'text-blue-800',
-  loading: 'text-blue-800',
+  success: 'text-green-800 dark:text-green-300',
+  error: 'text-red-800 dark:text-red-300',
+  warning: 'text-yellow-800 dark:text-yellow-300',
+  info: 'text-blue-800 dark:text-blue-300',
+  loading: 'text-blue-800 dark:text-blue-300',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -131,12 +131,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       <div className="flex-1 min-w-0">
         <h4 className={`font-medium ${TOAST_TITLE_COLORS[toast.type]}`}>{toast.title}</h4>
         {toast.message && (
-          <p className="mt-1 text-sm text-gray-600">{toast.message}</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{toast.message}</p>
         )}
         {toast.action && (
           <button
             onClick={() => { toast.action!.onClick(); onDismiss(toast.id); }}
-            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
           >
             {toast.action.label}
           </button>
@@ -145,7 +145,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
       
       <button
         onClick={() => onDismiss(toast.id)}
-        className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-black/5 transition-colors"
+        className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
         aria-label="Dismiss"
       >
         <X className="w-4 h-4" />
